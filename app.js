@@ -41,6 +41,7 @@ const App = {
   },
 
   findInBooks: function (searchType, searchTerm) {
+    searchTerm = String(searchTerm).toUpperCase();
     let fullResults = [];
     for (let bookName in books) {
       let book = books[bookName];
@@ -51,7 +52,7 @@ const App = {
         case "name":
           results = Object.values(colors).reduce((arr, color) => {
             let similarityPercentage = this.levenshteinSimilarity(searchTerm, color?.name);
-            if (color?.name?.includes(searchTerm) || similarityPercentage >= 93) {
+            if ((String(color?.name).toUpperCase()).includes(searchTerm) || similarityPercentage >= 93) {
               arr.push({...color, similarity: similarityPercentage});
             }
             return arr;
@@ -60,7 +61,7 @@ const App = {
         case "colorCode":
           results = Object.values(colors).reduce((arr, color) => {
             let similarityPercentage = this.levenshteinSimilarity(searchTerm, color?.colorCode);
-            if (color?.colorCode?.includes(searchTerm) || similarityPercentage >= 93) {
+            if ((String(color?.colorCode).toUpperCase()).includes(searchTerm) || similarityPercentage >= 93) {
               arr.push({...color, similarity: similarityPercentage});
             }
             return arr;
@@ -71,7 +72,7 @@ const App = {
             if (Object.values(colors).length) {
               results = Object.values(colors).reduce((arr, color) => {
                 let [isSimilar, similarityPercentage] = this.isColorSimilar(searchTerm, color.hex);
-                if (color?.hex?.startsWith(searchTerm) || isSimilar) {
+                if ((String(color?.hex).toUpperCase()).startsWith(searchTerm) || isSimilar) {
                   arr.push({...color, similarity: similarityPercentage});
                 }
                 return arr;
@@ -86,7 +87,7 @@ const App = {
 
             results = Object.values(colors).reduce((arr, color) => {
               let [isSimilar, similarityPercentage] = this.isColorSimilar(baseHex, color.hex);
-              if (color?.rgb?.startsWith(searchTerm) || isSimilar) {
+              if ((String(color?.rgb).toUpperCase()).startsWith(searchTerm) || isSimilar) {
                 arr.push({...color, similarity: similarityPercentage});
               }
 
@@ -106,7 +107,7 @@ const App = {
             let baseHex = this.rgbToHex(cmykRgb.r, cmykRgb.g, cmykRgb.b);
             results = Object.values(colors).reduce((arr, color) => {
               let [isSimilar, similarityPercentage] = this.isColorSimilar(baseHex, color.hex);
-              if (color?.cmyk?.startsWith(searchTerm) || isSimilar) {
+              if ((String(color?.cmyk).toUpperCase()).startsWith(searchTerm) || isSimilar) {
                 arr.push({...color, similarity: similarityPercentage});
               }
               return arr;
@@ -145,6 +146,7 @@ const App = {
 
   // Convert Hex to RGB
   hexToRgb: function (hex) {
+    hex = String(hex).toUpperCase();
     // Remove the '#' if it exists
     hex = hex.replace(/^#/, '');
 
@@ -240,6 +242,8 @@ const App = {
 
 // Function to calculate similarity percentage based on Levenshtein distance
   levenshteinSimilarity: function (a, b) {
+    a = String(a).toUpperCase();
+    b = String(b).toUpperCase();
     const maxLen = Math.max(a.length, b.length);
     const distance = this.levenshtein(a, b);
     const similarity = ((maxLen - distance) / maxLen) * 100; // Normalize to percentage
