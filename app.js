@@ -11,6 +11,13 @@ const App = {
     $("#search-btn").on("click", () => {
       this.search();
     });
+
+    $("#search-term").keypress((event) => {
+      if (event.which === 13) { // 13 is the keycode for Enter
+        // Code to execute when Enter is pressed
+        this.search();
+      }
+    });
   },
 
   search: function () {
