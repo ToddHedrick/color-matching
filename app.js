@@ -2,9 +2,14 @@ import books from "./data/books.js";
 
 const App = {
   _colorSimilarityThreshold: 30,
+  _levenshteinLengthThreshold: 7,
+  _levenshteinBoostFactor: 1.15,
+
+  searchTypes: ["colorCode", "hex", "rgb", "cmyk", "name"],
 
   init: function () {
     this.addEventListener();
+    this.buildDropdowns();
   },
 
   addEventListener: function () {
@@ -20,11 +25,23 @@ const App = {
     });
   },
 
+  buildDropdowns: function () {
+
+    $("#new-book").append($("<option></option>")
+      .attr("value", "")
+      .text(""));
+
+    for (let bookId in books) {
+      $("#new-book").append($("<option></option>")
+        .attr("value", bookId)
+        .text(books[bookId].name));
+    }
+  },
+
   search: function () {
-    let searchType = $("#search-type").val();
     let searchTerm = $("#search-term").val();
 
-    const results = this.findInBooks(searchType, searchTerm);
+    const results = this.findInBooks(searchTerm);
     $("#results").empty();
 
     results.forEach((item) => {
@@ -33,11 +50,11 @@ const App = {
   },
 
   generateSwatch: function (item) {
-    return `<div class="swatch col-md-4 mt-2">
+    return `<div class="swatch col-lg-4 col-sm-6 mt-2">
               <div class="card">
                 <div class="color" style="background-color: #${item?.hex}; height: 40px;"></div>
                 <div class="card-body">              
-                  <p class="swatch-name">Name: ${item?.name}</p>
+                  <p class="swatch-name card-title">Name: ${item?.name}</p>
                   <p class="swatch-hex">HEX: ${item?.hex}</p>
                   <p class="swatch-rgb">RGB: ${item?.rgb}</p>
                   <p class="swatch-cmyk">CMYK: ${item?.cmyk}</p>
@@ -47,81 +64,84 @@ const App = {
             </div>`;
   },
 
-  findInBooks: function (searchType, searchTerm) {
+  findInBooks: function (searchTerm) {
     searchTerm = String(searchTerm).toUpperCase();
     let fullResults = [];
-    for (let bookName in books) {
-      let book = books[bookName];
+    for (let bookId in books) {
+      let book = books[bookId];
       let colors = book.getColors();
       let results = [];
 
-      switch (searchType) {
-        case "name":
-          results = Object.values(colors).reduce((arr, color) => {
-            let similarityPercentage = this.levenshteinSimilarity(searchTerm, color?.name);
-            if ((String(color?.name).toUpperCase()).includes(searchTerm) || similarityPercentage >= 93) {
-              arr.push({...color, similarity: similarityPercentage});
-            }
-            return arr;
-          }, []);
-          break;
-        case "colorCode":
-          results = Object.values(colors).reduce((arr, color) => {
-            let similarityPercentage = this.levenshteinSimilarity(searchTerm, color?.colorCode);
-            if ((String(color?.colorCode).toUpperCase()).includes(searchTerm) || similarityPercentage >= 93) {
-              arr.push({...color, similarity: similarityPercentage});
-            }
-            return arr;
-          }, []);
-          break;
-        case "hex":
-          if (searchTerm.length >= 3) {
-            if (Object.values(colors).length) {
-              results = Object.values(colors).reduce((arr, color) => {
+      if (!Object.values(colors).length) {
+        continue;
+      }
+
+      results = Object.values(colors).reduce((arr, color) => {
+        let addedToList = false;
+        let similarityPercentage = 0;
+        for (let searchType of this.searchTypes) {
+          switch (searchType) {
+            case "name":
+              similarityPercentage = this.levenshteinSimilarity(searchTerm, color?.name);
+              if ((String(color?.name).toUpperCase()).includes(searchTerm) || similarityPercentage >= 93) {
+                arr.push({...color, similarity: similarityPercentage});
+                addedToList = true;
+              }
+              break;
+            case "colorCode":
+              similarityPercentage = this.levenshteinSimilarity(searchTerm, color?.colorCode);
+              if ((String(color?.colorCode).toUpperCase()).includes(searchTerm) || similarityPercentage >= 93) {
+                arr.push({...color, similarity: similarityPercentage});
+                addedToList = true;
+              }
+              break;
+            case "hex":
+              if (searchTerm.length >= 3) {
                 let [isSimilar, similarityPercentage] = this.isColorSimilar(searchTerm, color.hex);
                 if ((String(color?.hex).toUpperCase()).startsWith(searchTerm) || isSimilar) {
                   arr.push({...color, similarity: similarityPercentage});
+                  addedToList = true;
                 }
-                return arr;
-              }, []);
-            }
-          }
-          break;
-        case "rgb":
-          if (searchTerm.length >= 3) {
-            let rgbParts = searchTerm.split(",");
-            let baseHex = this.rgbToHex((rgbParts[0] || 0), (rgbParts[1] || 0), (rgbParts[2] || 0))
-
-            results = Object.values(colors).reduce((arr, color) => {
-              let [isSimilar, similarityPercentage] = this.isColorSimilar(baseHex, color.hex);
-              if ((String(color?.rgb).toUpperCase()).startsWith(searchTerm) || isSimilar) {
-                arr.push({...color, similarity: similarityPercentage});
               }
+              break;
+            case "rgb":
+              if (searchTerm.length >= 3) {
+                let rgbParts = searchTerm.split(",");
+                let baseHex = this.rgbToHex((rgbParts[0] || 0), (rgbParts[1] || 0), (rgbParts[2] || 0))
 
-              return arr;
-            }, []);
-          }
-          break;
-        case "cmyk":
-          if (searchTerm.length >= 2) {
-            let cmykParts = searchTerm.split(",");
-            let cmykRgb = this.cmykToRgb(
-              (cmykParts[0] || 0),
-              (cmykParts[1] || 0),
-              (cmykParts[2] || 0),
-              (cmykParts[3] || 0)
-            );
-            let baseHex = this.rgbToHex(cmykRgb.r, cmykRgb.g, cmykRgb.b);
-            results = Object.values(colors).reduce((arr, color) => {
-              let [isSimilar, similarityPercentage] = this.isColorSimilar(baseHex, color.hex);
-              if ((String(color?.cmyk).toUpperCase()).startsWith(searchTerm) || isSimilar) {
-                arr.push({...color, similarity: similarityPercentage});
+                let [isSimilar, similarityPercentage] = this.isColorSimilar(baseHex, color.hex);
+                if ((String(color?.rgb).toUpperCase()).startsWith(searchTerm) || isSimilar) {
+                  arr.push({...color, similarity: similarityPercentage});
+                  addedToList = true;
+                }
               }
-              return arr;
-            }, []);
+              break;
+            case "cmyk":
+              if (searchTerm.length >= 2) {
+                let cmykParts = searchTerm.split(",");
+                let cmykRgb = this.cmykToRgb(
+                  (cmykParts[0] || 0),
+                  (cmykParts[1] || 0),
+                  (cmykParts[2] || 0),
+                  (cmykParts[3] || 0)
+                );
+                let baseHex = this.rgbToHex(cmykRgb.r, cmykRgb.g, cmykRgb.b);
+
+                let [isSimilar, similarityPercentage] = this.isColorSimilar(baseHex, color.hex);
+                if ((String(color?.cmyk).toUpperCase()).startsWith(searchTerm) || isSimilar) {
+                  arr.push({...color, similarity: similarityPercentage});
+                  addedToList = true;
+                }
+              }
+              break;
           }
-          break;
-      }
+
+          if (addedToList) {
+            break;
+          }
+        }
+        return arr;
+      }, []);
       fullResults = fullResults.concat(results);
     }
 
@@ -220,6 +240,8 @@ const App = {
 
   // Function to calculate Levenshtein distance
   levenshtein: function (a, b) {
+    a = a.replace(/\s+/g, '');  // Remove all whitespace characters
+    b = b.replace(/\s+/g, '');  // Remove all whitespace characters
     const tmp = [];
     let i, j, alen = a.length, blen = b.length, res;
 
@@ -248,12 +270,18 @@ const App = {
   },
 
 // Function to calculate similarity percentage based on Levenshtein distance
-  levenshteinSimilarity: function (a, b) {
-    a = String(a).toUpperCase();
-    b = String(b).toUpperCase();
-    const maxLen = Math.max(a.length, b.length);
-    const distance = this.levenshtein(a, b);
-    const similarity = ((maxLen - distance) / maxLen) * 100; // Normalize to percentage
+  levenshteinSimilarity: function (needle, haystack) {
+    needle = String(needle).toUpperCase();
+    haystack = String(haystack).toUpperCase();
+    const maxLen = Math.max(needle.length, haystack.length);
+    const distance = this.levenshtein(needle, haystack);
+    let similarity = ((maxLen - distance) / maxLen) * 100; // Normalize to percentage
+
+    // Apply a boost for small strings only if the match is already below 99% thereby leaving full matches without boost as the highest possible match
+    if (needle.length <= this._levenshteinLengthThreshold && similarity < 99) {
+      similarity = Math.min(similarity * this._levenshteinBoostFactor, 99); // Ensure it doesn't exceed 100%
+    }
+
     return similarity;
   }
 
