@@ -1,1 +1,1 @@
-# pantone-color-match
+# color-matching
