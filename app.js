@@ -192,6 +192,7 @@ const App = {
     },
 
     showAlert: function (content) {
+        this.closeAlert();
         $("#main").prepend(
             $(`<div class="alert alert-warning alert-dismissible fade show" role="alert">
                 <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
