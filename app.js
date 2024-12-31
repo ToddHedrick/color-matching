@@ -1,18 +1,80 @@
-import Api from "./api.js";
+import Api from "./src/api.js";
+import Storage from "./src/storage.js";
+import Utils from "./src/utils.js";
+import DateTime from "./src/DateTime.js";
 
 const App = {
+    defaultSyncDate: "2000-01-01T00:00:00",
+
     _colorSimilarityThreshold: 30,
     _levenshteinLengthThreshold: 7,
     _levenshteinBoostFactor: 1.15,
 
     searchTypes: ["colorCode", "hex", "rgb", "cmyk", "name"],
 
-    init: function () {
-        this.addEventListener();
-        this.buildDropdowns();
+    init: async function () {
+        this.fetchMetadata();
+        this.addEventListeners();
+
+        let lastSourcesSyncDate = await Storage.retrieveRecord("metadata", "localSourcesLastSyncDate");
+        let lastSourcesSyncDateValue = (typeof lastSourcesSyncDate === "object" && lastSourcesSyncDate !== null) ? lastSourcesSyncDate?.value || this.defaultSyncDate : this.defaultSyncDate;
+        let sourcesCount = await Storage.tableCount("sources");
+        if (sourcesCount === 0) {
+            lastSourcesSyncDateValue = this.defaultSyncDate;
+        }
+
+        this.buildSourcesCacheAndDropdown(1, 50, lastSourcesSyncDateValue);
+
+        let lastColorSwatchesSyncDate = await Storage.retrieveRecord("metadata", "localColorSwatchesLastSyncDate");
+        let lastColorSwatchesSyncDateValue = (typeof lastColorSwatchesSyncDate === "object" && lastColorSwatchesSyncDate !== null) ? lastColorSwatchesSyncDate?.value || this.defaultSyncDate : this.defaultSyncDate;
+        let colorSwatchCount = await Storage.tableCount("color_swatches");
+        if (colorSwatchCount === 0) {
+            lastColorSwatchesSyncDateValue = this.defaultSyncDate;
+        }
+
+        this.buildColorSwatchCache(1, 50, lastColorSwatchesSyncDateValue);
     },
 
-    addEventListener: function () {
+    fetchMetadata: async function () {
+        Api.call("GET", Api.buildUrl("metadata"), null, {
+            success: async (records) => {
+                await Storage.putRecords("metadata", records);
+            }
+        });
+    },
+
+    buildColorSwatchCache: function (page, per_page, syncDate) {
+        if (!page) {
+            page = 1;
+        }
+        if (!per_page) {
+            per_page = 50;
+        }
+
+        this.showAlert("fetching color swatches");
+
+        Api.call("GET", Api.buildUrl("colorSwatches", {
+            syncDate: syncDate || this.defaultSyncDate,
+            page: page,
+            per_page: per_page
+        }), null, {
+            success: async (colorSwatches) => {
+                await Storage.putRecords("color_swatches", colorSwatches);
+                if (colorSwatches.length >= per_page) {
+                    this.buildColorSwatchCache(++page, per_page, syncDate);
+                } else {
+                    let lastSyncDate = {
+                        "id": "localColorSwatchesLastSyncDate",
+                        "value": (new DateTime()).modify("T-10M").format("Y-m-d\\TH:i:s", true)
+                    };
+                    await Storage.putRecord("metadata", lastSyncDate);
+                    this.closeAlert();
+                }
+            }
+        });
+    },
+
+    addEventListeners: function () {
         $("#search-btn").on("click", () => {
             this.search();
         });
@@ -23,39 +85,90 @@ const App = {
                 this.search();
             }
         });
+
+        $("#closePopup").on("click", () => {
+            this.closeAlert();
+        });
+
+        $(".create-new-btn").on("click", () => {
+            this.createNewSwatch();
+        });
     },
 
-    buildDropdowns: function () {
+    buildSourcesCacheAndDropdown: function (page, per_page, syncDate) {
+        if (!page) {
+            page = 1;
+        }
+        if (!per_page) {
+            per_page = 50;
+        }
 
-        $("#new-book").append($("<option></option>")
+        Api.call("GET", Api.buildUrl("sources", {
+            syncDate: syncDate || this.defaultSyncDate,
+            page: page,
+            per_page: per_page
+
+        }), null, {
+            success: async (records) => {
+                await Storage.putRecords("sources", records);
+                if (records.length >= per_page) {
+                    this.buildSourcesCacheAndDropdown(++page, per_page, syncDate);
+                } else {
+                    let lastSyncDate = {
+                        "id": "localSourcesLastSyncDate",
+                        "value": (new DateTime()).modify("T-10M").format("Y-m-d\\TH:i:s", true)
+                    };
+                    await Storage.putRecord("metadata", lastSyncDate);
+                    this._buildSourcesDropdown()
+                }
+            }
+        });
+    },
+
+    _buildSourcesDropdown: async function () {
+        $("#new-source").append($("<option></option>")
             .attr("value", "")
             .text(""));
 
-        for (let bookId in books) {
-            $("#new-book").append($("<option></option>")
-                .attr("value", bookId)
-                .text(books[bookId].name));
+        for await (let source of Storage.retrieveAllRecords("sources")) {
+            $("#new-source").append($("<option></option>")
+                .attr("value", source.id)
+                .text(source.name));
         }
     },
 
-    search: function () {
+    search: async function () {
         let searchTerm = $("#search-term").val();
 
         const $resultsElem = $("#results");
         $resultsElem.empty();
         $resultsElem.append(this.generateSpinner());
-        Api.call("GET", Api.buildUrl("", {searchTerm: searchTerm}), null, {
-            success: (results) => {
-                $resultsElem.empty();
-                results.forEach((item) => {
-                    $resultsElem.append(this.generateSwatch(item));
-                });
-            },
-            error: (data) => {
-                $resultsElem.empty();
-                console.error("ERROR :", data);
-                $resultsElem.append(`<pre>${JSON.stringify(data, null, 2)}</pre>`)
-            },
+
+        let allItems = [];
+        for await (let record of Storage.retrieveAllRecords("color_swatches")) {
+            console.log("Here", record)
+            allItems = allItems.concat(Utils.findMatchingValuesInRecords([record], searchTerm));
+        }
+        allItems = allItems.sort((a, b) => b.similarity - a.similarity);
+        $resultsElem.empty();
+        allItems.forEach((item) => {
+            $resultsElem.append(this.generateSwatch(item));
+        });
+    },
+
+    createNewSwatch: function () {
+        return;
+        Api.call("POST", Api.buildUrl("colorSwatches"), {
+            sourceId: $("#new-source").val(),
+            colorCode: $("#new-colorCode").val(),
+            hex: $("#new-hex").val(),
+            rgb: $("#new-rgb").val(),
+            cmyk: $("#new-cmyk").val(),
+            location: $("#new-location").val(),
+        }, {
+            success: async (record) => {
+                await Storage.putRecord("color_swatches", record);
+            }
         });
     },
 
@@ -76,7 +189,21 @@ const App = {
                 </div>
               </div>
             </div>`;
-    }
+    },
+
+    showAlert: function (content) {
+        $("#main").prepend(
+            $(`<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                <span class="alert-content">${content}</span>
+                <button type="button" class="alert-btn-close btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`)
+        );
+    },
+
+    closeAlert: function () {
+        $(".alert-btn-close").trigger("click");
+    },
 };
 $(document).ready(function () {
     App.init();

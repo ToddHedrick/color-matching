@@ -1,5 +1,5 @@
 const Api = {
-    _baseUrl: "https://wcb0vg5qng.execute-api.us-west-2.amazonaws.com/colorSwatches",
+    _baseUrl: "https://wcb0vg5qng.execute-api.us-west-2.amazonaws.com",
 
     buildUrl: function (pathPieces, queryParams) {
         let additionalPathPieces = [];
