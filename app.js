@@ -33,6 +33,25 @@ const App = {
         }
 
         this.buildColorSwatchCache(1, 100, lastColorSwatchesSyncDateValue);
+
+        this.processHash();
+    },
+
+    processHash: function () {
+        const currentUrl = new URL(window.location.href);
+        const currentPage = currentUrl.hash.split("/")[0];
+        if (currentPage === "#search") {
+            const hashPieces = currentUrl.hash.split("/");
+            if (hashPieces.length >= 2) {
+                const $searchTermElem = $("#search-term");
+                const currentSearchTerm = $searchTermElem.val();
+                if (currentSearchTerm !== hashPieces[1]) {
+                    $searchTermElem.val(hashPieces[1]);
+                    this.search();
+                    $("#colorPicker").val(`#${hashPieces[1]}`);
+                }
+            }
+        }
     },
 
     initiateBackgroundFetch: function (type) {
@@ -98,6 +117,10 @@ const App = {
     },
 
     addEventListeners: function () {
+        window.addEventListener("hashchange", () => {
+            this.processHash();
+        });
+
         $("#search-btn").on("click", () => {
             this.search();
         });
@@ -201,6 +224,8 @@ const App = {
 
     search: async function () {
         let searchTerm = $("#search-term").val();
+
+        history.pushState(null, null, `#search/${searchTerm}`);
 
         const $resultsElem = $("#results");
         $resultsElem.empty();
