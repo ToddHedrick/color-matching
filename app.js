@@ -23,7 +23,7 @@ const App = {
             lastSourcesSyncDateValue = this.defaultSyncDate;
         }
 
-        this.buildSourcesCacheAndDropdown(1, 50, lastSourcesSyncDateValue);
+        this.buildSourcesCacheAndDropdown(1, 100, lastSourcesSyncDateValue);
 
         let lastColorSwatchesSyncDate = await Storage.retrieveRecord("metadata", "localColorSwatchesLastSyncDate");
         let lastColorSwatchesSyncDateValue = (typeof lastColorSwatchesSyncDate === "object" && lastColorSwatchesSyncDate !== null) ? lastColorSwatchesSyncDate?.value || this.defaultSyncDate : this.defaultSyncDate;
@@ -35,6 +35,25 @@ const App = {
         this.buildColorSwatchCache(1, 100, lastColorSwatchesSyncDateValue);
     },
 
+    initiateBackgroundFetch: function (type) {
+        setTimeout(() => {
+            if (type === "color_swatches") {
+                Storage.retrieveRecord("metadata", "localColorSwatchesLastSyncDate").then((syncDate) => {
+                    let syncDateValue = (typeof syncDate === "object" && syncDate !== null) ? syncDate?.value || this.defaultSyncDate : this.defaultSyncDate;
+                    this.buildColorSwatchCache(1, 100, syncDateValue, true)
+                });
+            }
+
+            if (type === "sources") {
+                Storage.retrieveRecord("metadata", "localSourcesLastSyncDate").then((syncDate) => {
+                    let syncDateValue = (typeof syncDate === "object" && syncDate !== null) ? syncDate?.value || this.defaultSyncDate : this.defaultSyncDate;
+                    this.buildSourcesCacheAndDropdown(1, 100, syncDateValue, true)
+                });
+            }
+
+        }, 3 * 60 * 1000); // every 3 minutes
+    },
+
     fetchMetadata: async function () {
         Api.call("GET", Api.buildUrl("metadata"), null, {
             success: async (records) => {
@@ -43,7 +62,7 @@ const App = {
         });
     },
 
-    buildColorSwatchCache: function (page, per_page, syncDate) {
+    buildColorSwatchCache: function (page, per_page, syncDate, silentUpdate) {
         if (!page) {
             page = 1;
         }
@@ -51,7 +70,9 @@ const App = {
             per_page = 50;
         }
 
-        this.showToast(`downloading color swatches (${page})...`);
+        if (!silentUpdate) {
+            this.showToast(`downloading color swatches (${page})...`);
+        }
 
         Api.call("GET", Api.buildUrl("colorSwatches", {
             syncDate: syncDate || this.defaultSyncDate,
@@ -70,6 +91,7 @@ const App = {
                     };
                     await Storage.putRecord("metadata", lastSyncDate);
                     this.closeToast();
+                    this.initiateBackgroundFetch("color_swatches");
                 }
             }
         });
@@ -128,19 +150,25 @@ const App = {
                         "value": (new DateTime()).modify("T-10M").format("Y-m-d\\TH:i:s", true)
                     };
                     await Storage.putRecord("metadata", lastSyncDate);
-                    this._buildSourcesDropdown()
+                    this._buildSourcesDropdown();
+                    this.initiateBackgroundFetch("sources");
                 }
             }
         });
     },
 
     _buildSourcesDropdown: async function () {
-        $("#new-source").append($("<option></option>")
+        const $newSourceElem = $("#new-source");
+        $newSourceElem.html("");
+        $newSourceElem.append($("<option></option>")
             .attr("value", "")
             .text(""));
 
         for await (let source of Storage.retrieveAllRecords("sources")) {
-            $("#new-source").append($("<option></option>")
+            if (source?.delete) {
+                continue;
+            }
+            $newSourceElem.append($("<option></option>")
                 .attr("value", source.id)
                 .text(source.name));
         }
@@ -168,6 +196,10 @@ const App = {
 
         let allItems = [];
         for await (let record of Storage.retrieveAllRecords("color_swatches")) {
+            if (record?.deleted) {
+                continue;
+            }
+
             allItems = allItems.concat(Utils.findMatchingValuesInRecords([record], searchTerm));
 
             if (!searchTerm) {

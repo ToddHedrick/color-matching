@@ -103,27 +103,6 @@ const Storage = {
     },
 
     retrieveAllRecords: async function* (tableName) {
-        // return new Promise((resolve, reject) => {
-        //     debugger
-        //     try {
-        //         const transaction = this._db.transaction(tableName, "readonly");
-        //         const store = transaction.objectStore(tableName);
-        //
-        //         const request = store.getAll();
-        //
-        //         request.onsuccess = function () {
-        //             resolve(request.result);
-        //         };
-        //
-        //         request.onerror = function (event) {
-        //             console.error("Error retrieving all records", event.target.error)
-        //             reject(event.target.error);
-        //         };
-        //     } catch(error){
-        //         reject(error)
-        //     }
-        // });
-
         // Open a transaction and access the object store
         const transaction = this._db.transaction(tableName, "readonly");
         const store = transaction.objectStore(tableName);
