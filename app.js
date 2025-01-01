@@ -32,7 +32,7 @@ const App = {
             lastColorSwatchesSyncDateValue = this.defaultSyncDate;
         }
 
-        this.buildColorSwatchCache(1, 50, lastColorSwatchesSyncDateValue);
+        this.buildColorSwatchCache(1, 100, lastColorSwatchesSyncDateValue);
     },
 
     fetchMetadata: async function () {
@@ -251,7 +251,7 @@ const App = {
                     let lastColorSwatchesSyncDateValue = (typeof lastColorSwatchesSyncDate === "object" && lastColorSwatchesSyncDate !== null) ? lastColorSwatchesSyncDate?.value || null : null;
 
                     if (lastColorSwatchesSyncDateValue) {
-                        this.buildColorSwatchCache(1, 50, lastColorSwatchesSyncDateValue);
+                        this.buildColorSwatchCache(1, 100, lastColorSwatchesSyncDateValue);
                     }
                 },
                 error: (error, responseDetails) => {
