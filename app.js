@@ -102,7 +102,7 @@ const App = {
                 await Storage.putRecords("color_swatches", colorSwatches);
                 if (colorSwatches.length >= per_page) {
                     this.closeToast();
-                    this.buildColorSwatchCache(++page, per_page, syncDate);
+                    this.buildColorSwatchCache(++page, per_page, syncDate, silentUpdate);
                 } else {
                     let lastSyncDate = {
                         "id": "localColorSwatchesLastSyncDate",
