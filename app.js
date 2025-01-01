@@ -275,7 +275,12 @@ const App = {
             $("#new-rgb").val(existingColorSwatch?.rgb || "");
             $("#new-cmyk").val(existingColorSwatch?.cmyk || "");
             $("#new-relatedId").val(existingColorSwatch.id);
+        } else {
+            $("#new-relatedId").val("");
         }
+        $("#new-source").val("");
+        $("#colorCodePrefix").html("");
+        $("#colorCodeSuffix").html("");
 
         $("#addNewSwatchBtn").trigger("click");
     },
