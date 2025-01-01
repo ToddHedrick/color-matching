@@ -20,6 +20,14 @@
     }
 }
 
+.swatch .row {
+    margin-bottom: unset;
+}
+
+.swatch .card-title {
+    font-weight: bold;
+}
+
 .popup {
     position: fixed;
     top: 10px;
@@ -56,4 +64,20 @@
     border: none;
     color: white;
     cursor: pointer;
+}
+
+.bottom-10 {
+    bottom: 10 !important;
+}
+
+.bottom-55 {
+    bottom: 55 !important;
+}
+
+.end-20 {
+    right: 20 !important;
+}
+
+.zindex-top {
+    z-index: 9999;
 }

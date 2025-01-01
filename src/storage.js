@@ -19,11 +19,11 @@ const Storage = {
                         db.createObjectStore(table, {keyPath: "id"});
                     }
                 }
-                console.debug("database setup complete");
+                // console.debug("database setup complete");
             };
 
             request.onsuccess = function (event) {
-                console.debug("database opened successfully")
+                // console.debug("database opened successfully")
                 resolve(event.target.result);
             };
 

@@ -70,7 +70,6 @@ const Utils = {
     },
 
     findMatchingValuesInRecords: function (records, searchTerm) {
-        console.log("findMatchingValuesInRecords", records, searchTerm);
         if (searchTerm === null || typeof searchTerm === "undefined" || !String(searchTerm).trim().length) {
             return records;
         }
@@ -259,11 +258,9 @@ const Utils = {
         if (colorRgb) {
             const distance = this.colorDistance(baseColor, colorRgb);
             if (distance <= this._colorSimilarityThreshold) {
-                console.log("DISTANCE AMOUNT = ", distance);
                 // maxDistance is the distance between black (0,0,0) and white (255,255,255)
                 const maxDistance = 441.6729559300637;
                 const similarity = Math.max(0, Math.min(100, ((1 - (distance / maxDistance)) * 100)));
-                console.log("DISTANCE SIMILARITY = ", similarity);
                 return [true, similarity];
             }
         }

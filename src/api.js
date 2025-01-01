@@ -44,10 +44,10 @@ const Api = {
 
             const data = await response.json();
             if (!response.ok) {
-                console.error("Error in request:", data);
+                console.error("Error in request:", data, response);
                 if (callbacks !== null && typeof callbacks === "object") {
                     if (typeof callbacks?.error === "function") {
-                        callbacks.error(data);
+                        callbacks.error(data, {status: response.status, statusText: response.statusText});
                     }
                 }
             } else {
