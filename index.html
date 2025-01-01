@@ -32,91 +32,98 @@
 </svg>
 <div id="main" class="container-fluid mt-3">
     <div class="row">
-    <div class="col-xs-12">
-        <div id="add-new-container" class="position-fixed bottom-10 end-20 zindex-top">
-            <!-- Button trigger modal -->
-            <button type="button" id="addNewSwatchBtn" class="btn btn-primary" data-bs-toggle="modal"
-                    data-bs-target="#addNewSwatch">
-                + Add New
-            </button>
-        </div>
+        <div class="col-xs-12">
+            <div id="add-new-container" class="position-fixed bottom-10 end-20 zindex-top">
+                <!-- Button trigger modal -->
+                <button type="button" id="addNewSwatchBtn" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#addNewSwatch">
+                    + Add New
+                </button>
+            </div>
 
-        <!-- Modal -->
-        <div class="modal fade" id="addNewSwatch" tabindex="-1" aria-labelledby="addNewSwatchLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="addNewSwatchLabel">Add New Color Swatch</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" class="form-control" id="new-relatedId" placeholder="related id">
-                        <div class="form-floating mb-3">
-                            <select class="form-select needs-validation" id="new-source" aria-label="Source Select"
-                                    aria-required="true" required="required">
-                            </select>
-                            <label for="new-source">Source <span style="color: red; font-weight: bold">*</span></label>
+            <!-- Modal -->
+            <div class="modal fade" id="addNewSwatch" tabindex="-1" aria-labelledby="addNewSwatchLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="addNewSwatchLabel">Add New Color Swatch</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="form-floating input-group flex-nowrap mb-3">
-                            <span id="colorCodePrefix" class="input-group-text"></span>
-                            <span class="form-floating" style="flex: 1 1 auto">
+                        <div class="modal-body">
+                            <input type="hidden" class="form-control" id="new-relatedId" placeholder="related id">
+                            <div class="form-floating mb-3">
+                                <select class="form-select needs-validation" id="new-source" aria-label="Source Select"
+                                        aria-required="true" required="required">
+                                </select>
+                                <label for="new-source">Source <span
+                                        style="color: red; font-weight: bold">*</span></label>
+                            </div>
+                            <div class="form-floating input-group flex-nowrap mb-3">
+                                <span id="colorCodePrefix" class="input-group-text"></span>
+                                <span class="form-floating" style="flex: 1 1 auto">
                             <input type="text" class="form-control needs-validation" id="new-colorCode"
                                    placeholder="color code" aria-required="true" required="required">
                             <label for="new-colorCode">Color Code <span
                                     style="color: red; font-weight: bold">*</span></label>
                         </span>
-                            <span id="colorCodeSuffix" class="input-group-text"></span>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="new-hex" placeholder="hex">
-                            <label for="new-hex">HEX</label>
-                            <div id="new-hexFeedback" class="invalid-feedback">
-                                Please set at least one color value.
+                                <span id="colorCodeSuffix" class="input-group-text"></span>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="new-hex" placeholder="hex">
+                                <label for="new-hex">HEX</label>
+                                <div id="new-hexFeedback" class="invalid-feedback">
+                                    Please set at least one color value.
+                                </div>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="new-rgb" placeholder="rgb">
+                                <label for="new-rgb">RGB</label>
+                                <div id="new-rgbFeedback" class="invalid-feedback">
+                                    Please set at least one color value.
+                                </div>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="new-cmyk" placeholder="cmyk">
+                                <label for="new-cmyk">CMYK</label>
+                                <div id="new-cmykFeedback" class="invalid-feedback">
+                                    Please set at least one color value.
+                                </div>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="new-location" placeholder="location">
+                                <label for="new-location">Location</label>
                             </div>
                         </div>
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="new-rgb" placeholder="rgb">
-                            <label for="new-rgb">RGB</label>
-                            <div id="new-rgbFeedback" class="invalid-feedback">
-                                Please set at least one color value.
-                            </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary close-create-new-btn"
+                                    data-bs-dismiss="modal">
+                                Close
+                            </button>
+                            <button type="button" class="btn btn-primary create-new-btn">Save</button>
                         </div>
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="new-cmyk" placeholder="cmyk">
-                            <label for="new-cmyk">CMYK</label>
-                            <div id="new-cmykFeedback" class="invalid-feedback">
-                                Please set at least one color value.
-                            </div>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="new-location" placeholder="location">
-                            <label for="new-location">Location</label>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary close-create-new-btn" data-bs-dismiss="modal">
-                            Close
-                        </button>
-                        <button type="button" class="btn btn-primary create-new-btn">Save</button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="search-options" class="mx-auto col-md-6 col-sm-12 text-center">
-            <label for="search-term" class="h3">Search Colors</label>
-            <br>
-            <input id="search-term" type="text" class="form-control mx-auto col-sm-12 text-center"
-                   placeholder="search by color code, name, hex, rgb, or cmyk"/>
-            <input id="search-btn" type="button" class="btn btn-secondary mt-2" value="Search">
-        </div>
-        <div id="results-container" class="container mt-5 mb-5">
-            <div id="results" class="row">
+            <div id="search-options" class="mx-auto col-md-6 col-sm-12 text-center">
+                <label for="search-term" class="h3">Search Colors</label>
+                <br>
+                <input id="search-term" type="text" class="form-control mx-auto col-sm-12 text-center"
+                       placeholder="search by color code, name, hex, rgb, or cmyk"/>
+                <div class="inline-flex">
+                <label for="colorPicker" class="mt-3">Color Picker</label><input type="color" class="form-control form-control-color mt-2" id="colorPicker" value="#007bff"
+                       title="Choose your color">
+                <input id="search-btn" type="button" class="btn btn-secondary mt-2" value="Search">
+                </div>
+            </div>
+            <div id="results-container" class="container mt-5 mb-5">
+                <div id="results" class="row">
 
+                </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 </body>
 </html>

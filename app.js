@@ -124,6 +124,18 @@ const App = {
         $(document).on("click", ".toast-btn-close", (event) => {
             this.closeToast();
         });
+
+        $("#colorPicker").on("input", (event) => {
+            let value = event.target.value;
+            if (value.startsWith("#")) {
+                value = value.replace("#", "");
+            }
+            $("#search-term").val(value.toUpperCase());
+        });
+
+        $("#colorPicker").on("change", () => {
+            this.search();
+        });
     },
 
     buildSourcesCacheAndDropdown: function (page, per_page, syncDate) {

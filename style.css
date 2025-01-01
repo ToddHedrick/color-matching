@@ -81,3 +81,8 @@
 .zindex-top {
     z-index: 9999;
 }
+
+.inline-flex {
+    display: inline-flex;
+    column-gap: 1em;
+}
