@@ -69,7 +69,7 @@ const Utils = {
         return "";
     },
 
-    findMatchingValuesInRecords: function (records, searchTerm) {
+    findMatchingValuesInRecords: function (records, searchTerm, sourceFilters) {
         if (searchTerm === null || typeof searchTerm === "undefined" || !String(searchTerm).trim().length) {
             return records;
         }
@@ -82,6 +82,10 @@ const Utils = {
         searchTerm = String(searchTerm).toUpperCase().trim();
 
         let results = records.reduce((arr, color) => {
+            if(sourceFilters.length > 0 && !sourceFilters.includes(color?.sourceId)) {
+                return arr;
+            }
+
             let addToList = false;
             let similarityPercentage = 0;
             for (let searchType of this.searchTypes) {
