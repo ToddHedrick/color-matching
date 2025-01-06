@@ -214,7 +214,10 @@ const App = {
 
     _buildSourcesDropdown: async function () {
         const $sourceFilterElem = $("#source-filter");
+        $sourceFilterElem.html("");
+
         const $newSourceElem = $("#new-source");
+
         $newSourceElem.html("");
         $newSourceElem.append($("<option></option>")
             .attr("value", "")
