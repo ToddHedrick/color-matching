@@ -109,9 +109,9 @@ const Utils = {
                         break;
                     case "hex":
                         if (searchTerm.length >= 3) {
-                            let [isSimilar, colorSimilarityPercentage] = this.isColorSimilar(searchTerm, color.hex);
+                            let [isSimilar, colorSimilarityPercentage] = this.isColorSimilar(searchTerm, color?.communitySuggestions?.hex ?? color?.hex);
                             similarityPercentage = colorSimilarityPercentage;
-                            if ((String(color?.hex).toUpperCase()).startsWith(searchTerm) || isSimilar) {
+                            if ((String(color?.communitySuggestions?.hex ?? color?.hex).toUpperCase()).startsWith(searchTerm) || isSimilar) {
                                 addToList = true;
                             }
                         }
@@ -121,9 +121,9 @@ const Utils = {
                             let rgbParts = searchTerm.split(",");
                             let baseHex = this.rgbToHex((rgbParts[0] || 0), (rgbParts[1] || 0), (rgbParts[2] || 0))
 
-                            let [isSimilar, colorSimilarityPercentage] = this.isColorSimilar(baseHex, color.hex);
+                            let [isSimilar, colorSimilarityPercentage] = this.isColorSimilar(baseHex, color?.communitySuggestions?.hex ?? color?.hex);
                             similarityPercentage = colorSimilarityPercentage;
-                            if ((String(color?.rgb).toUpperCase()).startsWith(searchTerm) || isSimilar) {
+                            if ((String(color?.communitySuggestions?.rgb ?? color?.rgb).toUpperCase()).startsWith(searchTerm) || isSimilar) {
                                 addToList = true;
                             }
                         }
@@ -139,9 +139,9 @@ const Utils = {
                             );
                             let baseHex = this.rgbToHex(cmykRgb.r, cmykRgb.g, cmykRgb.b);
 
-                            let [isSimilar, colorSimilarityPercentage] = this.isColorSimilar(baseHex, color.hex);
+                            let [isSimilar, colorSimilarityPercentage] = this.isColorSimilar(baseHex, color?.communitySuggestions?.hex ?? color?.hex);
                             similarityPercentage = colorSimilarityPercentage;
-                            if ((String(color?.cmyk).toUpperCase()).startsWith(searchTerm) || isSimilar) {
+                            if ((String(color?.communitySuggestions?.cmyk ?? color?.cmyk).toUpperCase()).startsWith(searchTerm) || isSimilar) {
                                 addToList = true;
                             }
                         }

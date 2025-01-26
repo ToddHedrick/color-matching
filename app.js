@@ -637,7 +637,7 @@ const App = {
             }
 
             let btns = (fieldDef.includeCopyAndSearchBtn) ?
-                `<div class="col-3"><i class="bi bi-copy copy-to-clipboard" data-value="${value}" title="Copy"></i>&nbsp;&nbsp;&nbsp;<i class="bi bi-search click-to-search" data-value="${value}" title="Search"></i></div>`
+                `<div class="col-3"><i class="bi bi-copy copy-to-clipboard" data-value="${displayValue}" title="Copy"></i>&nbsp;&nbsp;&nbsp;<i class="bi bi-search click-to-search" data-value="${displayValue}" title="Search"></i></div>`
                 : '';
 
             let columnSize = (fieldDef.includeCopyAndSearchBtn) ? 'col-5' : 'col-8';
