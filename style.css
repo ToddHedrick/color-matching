@@ -74,6 +74,10 @@
     bottom: 55 !important;
 }
 
+.end-0 {
+    right: 0 !important;
+}
+
 .end-20 {
     right: 20 !important;
 }
@@ -85,4 +89,9 @@
 .inline-flex {
     display: inline-flex;
     column-gap: 1em;
+}
+
+a.swatch-name {
+    text-decoration: none;
+    cursor: pointer;
 }

@@ -71,7 +71,7 @@ const Utils = {
 
     findMatchingValuesInRecords: function (records, searchTerm, sourceFilters) {
         if (searchTerm === null || typeof searchTerm === "undefined" || !String(searchTerm).trim().length) {
-            return records;
+            searchTerm = "";
         }
 
         let fullResults = [];
@@ -83,6 +83,11 @@ const Utils = {
 
         let results = records.reduce((arr, color) => {
             if(sourceFilters.length > 0 && !sourceFilters.includes(color?.sourceId)) {
+                return arr;
+            }
+
+            if (!searchTerm) {
+                arr.push(color);
                 return arr;
             }
 

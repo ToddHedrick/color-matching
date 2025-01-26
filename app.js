@@ -71,7 +71,7 @@ const App = {
                 });
             }
 
-        }, 3 * 60 * 1000); // every 3 minutes
+        }, 30 * 1000); // every 30 seconds
     },
 
     fetchMetadata: async function () {
@@ -134,7 +134,7 @@ const App = {
         });
 
         $("#new-source").on("change", () => {
-            this.updateColorCodePrefixAndSuffix();
+            this.updateColorCodePrefixAndSuffix($("#new-source").val(), "#colorCodePrefix", "#colorCodeSuffix");
         });
 
         $(".create-new-btn").on("click", () => {
@@ -143,6 +143,18 @@ const App = {
 
         $(document).on("click", ".add-related-btn", (event) => {
             this.addRelatedSwatch(event.target.dataset.id)
+        });
+
+        $(document).on("click", ".edit-btn", (event) => {
+            this.editSwatchBtnClicked(event.target.dataset.id)
+        });
+
+        // $(document).on("click", ".swatch-name", (event) => {
+        //     this.generateSelectedSwatch(event.target.dataset.id)
+        // });
+
+        $(".edit-swatch-btn").on("click", () => {
+            this.updateExistingSwatch();
         });
 
         $(document).on("click", ".toast-btn-close", (event) => {
@@ -160,7 +172,7 @@ const App = {
 
         $(document).on("click", ".source-filter-checkbox", (event) => {
             let currentCheckedValue = $(event.target).attr('checked');
-            if(currentCheckedValue){
+            if (currentCheckedValue) {
                 $(event.target).attr('checked', false);
             } else {
                 $(event.target).attr('checked', true);
@@ -178,6 +190,56 @@ const App = {
 
         $("#colorPicker").on("change", () => {
             this.search();
+        });
+
+        $("#colorPickerModal").on("input", (event) => {
+            let value = event.target.value;
+            if (value.startsWith("#")) {
+                value = value.replace("#", "");
+            }
+            let existingNewHex = $("#new-hex").val();
+            if (existingNewHex !== value) {
+                $("#new-hex").val(value.toUpperCase());
+                $("#new-rgb").val(Utils.getColorValue("rgb", "hex", value));
+                $("#new-cmyk").val(Utils.getColorValue("cmyk", "hex", value));
+            }
+        });
+
+        $("#new-hex").on("change", (event) => {
+            let value = event.target.value;
+            if (!value.startsWith("#")) {
+                value = "#" + value;
+            }
+
+            let existingColorPickerModalHex = $("#colorPickerModal").val();
+            if (existingColorPickerModalHex !== value) {
+                $("#colorPickerModal").val(value.toUpperCase());
+            }
+        });
+
+        $("#colorPickerEditModal").on("input", (event) => {
+            let value = event.target.value;
+            if (value.startsWith("#")) {
+                value = value.replace("#", "");
+            }
+            let existingNewHex = $("#existing-hex").val();
+            if (existingNewHex !== value) {
+                $("#existing-hex").val(value.toUpperCase());
+                $("#existing-rgb").val(Utils.getColorValue("rgb", "hex", value));
+                $("#existing-cmyk").val(Utils.getColorValue("cmyk", "hex", value));
+            }
+        });
+
+        $("#existing-hex").on("change", (event) => {
+            let value = event.target.value;
+            if (!value.startsWith("#")) {
+                value = "#" + value;
+            }
+
+            let existingColorPickerModalHex = $("#colorPickerEditModal").val();
+            if (existingColorPickerModalHex !== value) {
+                $("#colorPickerEditModal").val(value.toUpperCase());
+            }
         });
     },
 
@@ -223,15 +285,26 @@ const App = {
             .attr("value", "")
             .text(""));
 
+        const $existingSourceElem = $("#existing-source");
+
+        $existingSourceElem.html("");
+        $existingSourceElem.append($("<option></option>")
+            .attr("value", "")
+            .text(""));
+
         for await (let source of Storage.retrieveAllRecords("sources")) {
             if (source?.delete) {
                 continue;
             }
             let dropdownLabel = source.name;
-            if(source.shortName && source.name !== source.shortName){
+            if (source.shortName && source.name !== source.shortName) {
                 dropdownLabel = `${dropdownLabel} (${source.shortName})`;
             }
             $newSourceElem.append($("<option></option>")
+                .attr("value", source.id)
+                .text(dropdownLabel));
+
+            $existingSourceElem.append($("<option></option>")
                 .attr("value", source.id)
                 .text(dropdownLabel));
 
@@ -240,16 +313,16 @@ const App = {
         }
     },
 
-    updateColorCodePrefixAndSuffix: async function () {
-        const sourceObj = await Storage.retrieveRecord("sources", $("#new-source").val());
-        $("#colorCodePrefix").html("");
+    updateColorCodePrefixAndSuffix: async function (sourceId, elemPrefixId, elemSuffixId) {
+        const sourceObj = await Storage.retrieveRecord("sources", sourceId);
+        $(elemPrefixId).html("");
         if (sourceObj?.colorCodePrefix) {
-            $("#colorCodePrefix").html(sourceObj.colorCodePrefix);
+            $(elemPrefixId).html(sourceObj.colorCodePrefix);
         }
 
-        $("#colorCodeSuffix").html("");
+        $(elemSuffixId).html("");
         if (sourceObj?.colorCodeSuffix) {
-            $("#colorCodeSuffix").html(sourceObj.colorCodeSuffix);
+            $(elemSuffixId).html(sourceObj.colorCodeSuffix);
         }
     },
 
@@ -366,6 +439,14 @@ const App = {
                     if (lastColorSwatchesSyncDateValue) {
                         this.buildColorSwatchCache(1, 100, lastColorSwatchesSyncDateValue);
                     }
+                    $("#new-hex").val("");
+                    $("#new-rgb").val("");
+                    $("#new-cmyk").val("");
+                    $("#new-relatedId").val("");
+                    $("#new-source").val("");
+                    $("#new-colorCode").val("");
+                    $("#colorCodePrefix").html("");
+                    $("#colorCodeSuffix").html("");
                 },
                 error: (error, responseDetails) => {
                     this.closeToast();
@@ -381,17 +462,107 @@ const App = {
         }
     },
 
+    editSwatchBtnClicked: async function (colorSwatchId) {
+        const existingColorSwatch = await Storage.retrieveRecord("color_swatches", colorSwatchId);
+        if (existingColorSwatch) {
+            if (existingColorSwatch?.sourceId) {
+                this.updateColorCodePrefixAndSuffix(existingColorSwatch?.sourceId, "#existingColorCodePrefix", "#existingColorCodeSuffix");
+            }
+
+            $("#existing-id").val(existingColorSwatch?.id);
+            $("#existing-source").val(existingColorSwatch?.sourceId ?? "");
+            $("#existing-colorCode").val(existingColorSwatch?.colorCode ?? "");
+            $("#existing-hex").val(existingColorSwatch?.hex ?? "");
+            $("#colorPickerEditModal").val("#" + existingColorSwatch?.hex ?? "000000")
+            $("#existing-rgb").val(existingColorSwatch?.rgb ?? "");
+            $("#existing-cmyk").val(existingColorSwatch?.cmyk ?? "");
+            $("#existing-relatedId").val(existingColorSwatch?.relatedId ?? "");
+            $("#existing-location").val(existingColorSwatch?.location ?? "");
+        } else {
+            $("#existing-id").val("");
+            $("#existing-source").val("");
+            $("#existing-colorCode").val("");
+            $("#existing-hex").val("");
+            $("#colorPickerEditModal").val("#000000")
+            $("#existing-rgb").val("");
+            $("#existing-cmyk").val("");
+            $("#existing-relatedId").val("");
+            $("#existing-location").val("");
+        }
+
+        $("#editSwatchBtn").trigger("click");
+    },
+
+    updateExistingSwatch: async function () {
+
+        let existingId = $("#existing-id").val();
+        if (existingId) {
+            const existingColorSwatch = await Storage.retrieveRecord("color_swatches", existingId);
+            if (existingColorSwatch) {
+                const updatableFields = ["hex", "rgb", "cmyk", "location"];
+                let changes = {};
+                for (let field of updatableFields) {
+                    let updatedValue = $(`#existing-${field}`).val();
+                    if (existingColorSwatch[field] !== updatedValue) {
+                        changes[field] = updatedValue;
+                    }
+                }
+
+                this.showToast("updating...");
+                Api.call("PUT", Api.buildUrl(["colorSwatches", existingId]), {changes: changes}, {
+                    success: async (record) => {
+                        this.closeToast();
+                        await Storage.putRecord("color_swatches", record);
+                        $(".close-edit-swatch-btn").trigger("click");
+                        let lastColorSwatchesSyncDate = await Storage.retrieveRecord("metadata", "localColorSwatchesLastSyncDate");
+                        let lastColorSwatchesSyncDateValue = (typeof lastColorSwatchesSyncDate === "object" && lastColorSwatchesSyncDate !== null) ? lastColorSwatchesSyncDate?.value || null : null;
+
+                        if (lastColorSwatchesSyncDateValue) {
+                            this.buildColorSwatchCache(1, 100, lastColorSwatchesSyncDateValue);
+                        }
+                        $("#existing-id").val("");
+                        $("#existing-hex").val("");
+                        $("#existing-rgb").val("");
+                        $("#existing-cmyk").val("");
+                        $("#existing-relatedId").val("");
+                        $("#existing-colorCode").val("");
+                        $("#existing-location").val("");
+                        $("#existing-source").val("");
+                        $("#existingColorCodePrefix").html("");
+                        $("#existingColorCodeSuffix").html("");
+                    },
+                    error: (error, responseDetails) => {
+                        this.closeToast();
+                        if (responseDetails?.status === 400) {
+                            if (typeof error?.errorDetails === "object" && error?.errorDetails !== null) {
+                                if (error?.errorDetails?.name === "ConditionalCheckFailedException") {
+                                    this.showToast("color swatch already exists");
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    },
+
     addRelatedSwatch: async function (relatedId) {
         const existingColorSwatch = await Storage.retrieveRecord("color_swatches", relatedId);
         if (existingColorSwatch) {
-            $("#new-hex").val(existingColorSwatch?.hex || "");
-            $("#new-rgb").val(existingColorSwatch?.rgb || "");
-            $("#new-cmyk").val(existingColorSwatch?.cmyk || "");
+            $("#new-hex").val(existingColorSwatch?.hex ?? "");
+            $("#colorPickerModal").val("#" + existingColorSwatch?.hex ?? "000000")
+            $("#new-rgb").val(existingColorSwatch?.rgb ?? "");
+            $("#new-cmyk").val(existingColorSwatch?.cmyk ?? "");
             $("#new-relatedId").val(existingColorSwatch.id);
         } else {
+            $("#new-hex").val("");
+            $("#colorPickerModal").val("#000000")
+            $("#new-rgb").val("");
+            $("#new-cmyk").val("");
             $("#new-relatedId").val("");
         }
         $("#new-source").val("");
+        $("#new-colorCode").val("");
         $("#colorCodePrefix").html("");
         $("#colorCodeSuffix").html("");
 
@@ -418,7 +589,7 @@ const App = {
             if (sourceObj) {
                 fields.push({"name": "sourceName", "label": "Source"})
                 sourceName = sourceObj.name;
-                if(sourceObj.shortName && sourceObj.name !== sourceObj.shortName){
+                if (sourceObj.shortName && sourceObj.name !== sourceObj.shortName) {
                     sourceName = `${sourceName} (${sourceObj.shortName})`;
                 }
             }
@@ -428,44 +599,96 @@ const App = {
             fields.push({"name": "location", "label": "Location"})
         }
 
+        let hasCommunitySuggestions = false;
+
         return `<div class="swatch col-lg-4 col-sm-6 mt-2" data-id="${item.id}">
               <div class="card">
-                <div class="color" style="background-color: #${item?.hex}; height: 40px;"></div>
+                <div class="color" style="background-color: #${item?.communitySuggestions?.hex ?? item?.hex}; height: 40px;"></div>
                 <div class="card-body">
-                <button type="button" class="add-related-btn btn btn-sm btn-outline-primary position-absolute end-20" data-id="${item.id}">+ Add Related</button>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-primary dropdown-toggle position-absolute end-0" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    Actions
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    <li><a class="dropdown-item add-related-btn" data-id="${item.id}"><i class="bi bi-plus-circle-fill"></i>&nbsp;&nbsp;Add New</a></li>
+                    <li><a class="dropdown-item edit-btn" data-id="${item.id}"><i class="bi bi-pencil-fill"></i>&nbsp;&nbsp;Edit</a></li>
+                  </ul>
+                </div>
                 <div class="row">
                   <div class="col-8 card-title">Name: </div>
                   <div class="col-8">
-                    <p class="swatch-name">${item.name}</p>
+                    <p class="swatch-name" data-id="${item.id}">${item.name}</p>
                   </div>
                 </div>
         ${fields.map((fieldDef) => {
+            let communitySuggestion = false;
             let value = item[fieldDef.name];
+            let displayValue = value;
             if (fieldDef.name === "similarity") {
-                value = Number(value).toFixed(2) + "%";
+                displayValue = Number(value).toFixed(2) + "%";
             } else if (fieldDef.name === "sourceName") {
-                value = sourceName;
+                displayValue = sourceName;
+            } else if (item?.communitySuggestions) {
+                if (item.communitySuggestions[fieldDef.name]) {
+                    communitySuggestion = true;
+                    hasCommunitySuggestions = true;
+                    displayValue = item.communitySuggestions[fieldDef.name];
+                }
             }
 
-            let btns = (fieldDef.includeCopyAndSearchBtn) ? 
-                `<div class="col-3"><i class="bi bi-copy copy-to-clipboard" data-value="${value}" title="Copy"></i>&nbsp;&nbsp;&nbsp;<i class="bi bi-search click-to-search" data-value="${value}" title="Search"></i></div>` 
+            let btns = (fieldDef.includeCopyAndSearchBtn) ?
+                `<div class="col-3"><i class="bi bi-copy copy-to-clipboard" data-value="${value}" title="Copy"></i>&nbsp;&nbsp;&nbsp;<i class="bi bi-search click-to-search" data-value="${value}" title="Search"></i></div>`
                 : '';
-            
+
             let columnSize = (fieldDef.includeCopyAndSearchBtn) ? 'col-5' : 'col-8';
 
             return `<div class="row">
                     <div class="col-4 card-title">${fieldDef.label}: </div>
                     <div class="${columnSize}">
-                        <p class="swatch-${fieldDef.name}">
-                        ${value}
+                        <p class="swatch-${fieldDef.name}" data-originalvalue="${value}">
+                            ${displayValue}${communitySuggestion ? "*" : ""}
+                            <br><span style="font-size: x-small; font-style: italic">${communitySuggestion ? `original value: ${value}` : ""}</span>
                         </p>
                     </div>
                     ${btns}
                 </div>`;
         }).join("")}
+                    <p style="font-size: small; font-style: italic">${hasCommunitySuggestions ? "* some values have been updated from their original" : ""}</p>
                 </div>
               </div>
             </div>`;
+    },
+
+    generateSelectedSwatch: async function (colorSwatchId) {
+        const item = await Storage.retrieveRecord("color_swatches", colorSwatchId);
+        let value = item["hex"];
+        let hex = value;
+        if (item?.communitySuggestions) {
+            if (item.communitySuggestions["hex"]) {
+                hex = item.communitySuggestions["hex"];
+            }
+        }
+
+        const $searchOptionsElem = $("#search-options");
+        $searchOptionsElem.addClass("visually-hidden");
+
+        const $selectedSwatchElem = $("#selected-swatch");
+        $selectedSwatchElem.empty();
+        $selectedSwatchElem.removeClass("visually-hidden")
+        $selectedSwatchElem.append(
+            `<div id="search-options" class="mx-auto col-md-6 col-sm-12 text-center">
+                <label class="h3">Showing Colors Similar To: ${item.name}</label>
+            </div>
+            <div class="color col-sm-12" style="background-color: #${item?.hex}; height: 10px;"></div>
+            <div class="color col-sm-4" style="background-color: #${item?.hex}; height: 30px;"></div>
+            <div class="col-sm-4"> HEX: ${hex}</div>
+            <div class="color col-sm-4" style="background-color: #${item?.hex}; height: 30px;"></div>
+            <div class="color col-sm-12" style="background-color: #${item?.hex}; height: 10px;"></div>
+            `
+        );
+
+        $("#search-term").val(hex);
+        this.search()
     },
 
     showAlert: function (content) {
