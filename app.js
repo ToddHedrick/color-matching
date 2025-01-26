@@ -472,12 +472,12 @@ const App = {
             $("#existing-id").val(existingColorSwatch?.id);
             $("#existing-source").val(existingColorSwatch?.sourceId ?? "");
             $("#existing-colorCode").val(existingColorSwatch?.colorCode ?? "");
-            $("#existing-hex").val(existingColorSwatch?.hex ?? "");
-            $("#colorPickerEditModal").val("#" + existingColorSwatch?.hex ?? "000000")
-            $("#existing-rgb").val(existingColorSwatch?.rgb ?? "");
-            $("#existing-cmyk").val(existingColorSwatch?.cmyk ?? "");
-            $("#existing-relatedId").val(existingColorSwatch?.relatedId ?? "");
-            $("#existing-location").val(existingColorSwatch?.location ?? "");
+            $("#existing-hex").val(existingColorSwatch?.communitySuggestions?.hex ?? existingColorSwatch?.hex ?? "");
+            $("#colorPickerEditModal").val("#" + existingColorSwatch?.communitySuggestions?.hex ?? existingColorSwatch?.hex ?? "000000")
+            $("#existing-rgb").val(existingColorSwatch?.communitySuggestions?.rgb ?? existingColorSwatch?.rgb ?? "");
+            $("#existing-cmyk").val(existingColorSwatch?.communitySuggestions?.cmyk ?? existingColorSwatch?.cmyk ?? "");
+            $("#existing-relatedId").val(existingColorSwatch?.communitySuggestions?.relatedId ?? existingColorSwatch?.relatedId ?? "");
+            $("#existing-location").val(existingColorSwatch?.communitySuggestions?.location ?? existingColorSwatch?.location ?? "");
         } else {
             $("#existing-id").val("");
             $("#existing-source").val("");
@@ -549,10 +549,10 @@ const App = {
     addRelatedSwatch: async function (relatedId) {
         const existingColorSwatch = await Storage.retrieveRecord("color_swatches", relatedId);
         if (existingColorSwatch) {
-            $("#new-hex").val(existingColorSwatch?.hex ?? "");
-            $("#colorPickerModal").val("#" + existingColorSwatch?.hex ?? "000000")
-            $("#new-rgb").val(existingColorSwatch?.rgb ?? "");
-            $("#new-cmyk").val(existingColorSwatch?.cmyk ?? "");
+            $("#new-hex").val(existingColorSwatch?.communitySuggestions?.hex ?? existingColorSwatch?.hex ?? "");
+            $("#colorPickerModal").val("#" + existingColorSwatch?.communitySuggestions?.hex ?? existingColorSwatch?.hex ?? "000000")
+            $("#new-rgb").val(existingColorSwatch?.communitySuggestions?.rgb ?? existingColorSwatch?.rgb ?? "");
+            $("#new-cmyk").val(existingColorSwatch?.communitySuggestions?.cmyk ?? existingColorSwatch?.cmyk ?? "");
             $("#new-relatedId").val(existingColorSwatch.id);
         } else {
             $("#new-hex").val("");
